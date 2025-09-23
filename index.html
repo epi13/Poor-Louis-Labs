@@ -13,12 +13,27 @@
   <header>
     <nav class="nav" aria-label="Main">
       <a class="brand" href="#" aria-label="Poor Louis Labs home">
-        <span class="logo" aria-hidden="true">
-          <span class="dipper" aria-hidden="true">
-            <span class="star s1"></span><span class="star s2"></span><span class="star s3"></span>
-            <span class="star s4"></span><span class="star s5"></span><span class="star s6"></span>
-            <span class="star s7"></span>
-          </span>
+        <span class="logo" aria-hidden="true" title="Poor Louis Labs">
+          <!-- Minimalist Big Dipper inline SVG lockup -->
+          <svg width="140" height="40" viewBox="0 0 140 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(70 20) scale(70 22)">
+                <stop stop-color="#7cc7ff" stop-opacity="0.5"/>
+                <stop offset="1" stop-color="#7cc7ff" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <rect x="0" y="0" width="140" height="40" rx="12" fill="url(#glow)" fill-opacity="0.25"/>
+            <!-- Big Dipper stars (stylized) -->
+            <g>
+              <circle cx="16" cy="26" r="2.3" fill="#fff"/>
+              <circle cx="30" cy="18" r="2.1" fill="#fff"/>
+              <circle cx="48" cy="16" r="2.1" fill="#fff"/>
+              <circle cx="64" cy="22" r="2.1" fill="#fff"/>
+              <circle cx="80" cy="28" r="2.1" fill="#fff"/>
+              <circle cx="94" cy="14" r="2.1" fill="#fff"/>
+              <circle cx="112" cy="20" r="2.1" fill="#fff"/>
+            </g>
+          </svg>
         </span>
         <span>
           <h1>Poor Louis Labs</h1>
@@ -51,7 +66,7 @@
           <div>
             <div class="card" style="min-height:220px">
               <h3>What is Poor Louis Labs?</h3>
-              <p class="muted">A small, stubborn lab in Alaska building odd-but-useful systems. We publish notes, prototypes, and essays so others can remix the work.</p>
+              <p class="muted">A small, stubborn lab in Alaska building odd‑but‑useful systems. We publish notes, prototypes, and essays so others can remix the work.</p>
               <div class="actions">
                 <a class="pill" href="#" data-open="about">About the Lab →</a>
                 <a class="pill" href="#" data-open="labnotes">Recent Lab Notes →</a>
@@ -111,7 +126,7 @@
       <p>Poor Louis Labs explores practical computing in three threads:</p>
       <ul>
         <li><strong>Tractability & Branchless Design</strong> — tools that replace control flow with masks, muxes, and arithmetic.</li>
-        <li><strong>Reversible Systems</strong> — RCR-style witnesses, undoable memory, and time-travel debugging.</li>
+        <li><strong>Reversible Systems</strong> — RCR-style witnesses, undoable memory, and time‑travel debugging.</li>
         <li><strong>Digital Senses</strong> — turning intrinsic machine noise (timing jitter, thermal drift) into usable signals.</li>
       </ul>
       <p>We publish essays, code, and open lab notes so others can build faster than we did.</p>
@@ -124,13 +139,16 @@
       <button class="close" data-close>Close</button>
     </div>
     <div class="panel-body">
-      <p>Featured series (placeholders—link to real posts or Markdown files in your repo):</p>
-      <ol>
-        <li><strong>Tractability Notes</strong> — why latents break, and how to make them behave.</li>
-        <li><strong>Branchless Patterns</strong> — practical recipes for mask-based programming.</li>
-        <li><strong>Reversible Debugging</strong> — witness tags, deposits, and time travel.</li>
-      </ol>
-      <p class="muted">Tip: put your essays as <code>/writings/post-name.html</code> or link out to Medium/Reddit.</p>
+      <div id="writings-wrap" style="display:grid; grid-template-columns: 260px 1fr; gap:16px; align-items:start">
+        <aside>
+          <input id="writings-search" type="search" placeholder="Search…" style="width:100%; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.06); color:var(--text)">
+          <ul id="writings-list" style="list-style:none; padding:10px 0 0; margin:0; display:flex; flex-direction:column; gap:6px"></ul>
+        </aside>
+        <article id="writings-article" style="min-height:280px; border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:16px; background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03)); overflow:auto"></article>
+      </div>
+      <p class="muted" style="margin-top:10px">
+        This panel auto-loads <code>./writings/index.json</code> and Markdown files in <code>./writings/</code>. Use relative paths for GitHub Pages subpaths.
+      </p>
     </div>
   </dialog>
 
@@ -143,7 +161,7 @@
       <ul>
         <li><strong>MAoD IR Pipeline</strong> — Zig AIR → branchless reversible IR → bytecode/x86.</li>
         <li><strong>Digital Senses</strong> — sampler + orbiter for intrinsic machine signals.</li>
-        <li><strong>Alaska Voxel Engine</strong> — isometric exploration with procedural poly-voxels.</li>
+        <li><strong>Alaska Voxel Engine</strong> — isometric exploration with procedural poly‑voxels.</li>
       </ul>
       <p class="muted">Replace these items with links to your GitHub repos or docs.</p>
     </div>
@@ -155,12 +173,8 @@
       <button class="close" data-close>Close</button>
     </div>
     <div class="panel-body">
-      <p>Drop in day-to-day findings here. Example:</p>
-      <ul>
-        <li>[2025‑09‑23] BIR to RASM lowering pass shows 12% fewer spills with mask-threaded select.</li>
-        <li>[2025‑09‑20] Digitals senses frame now multiplexes 16 channels at 2 kHz.</li>
-      </ul>
-      <p class="muted">You can auto-generate this list from a <code>labnotes.json</code> later.</p>
+      <ul id="labnotes-list" style="list-style:none; padding-left:0; display:flex; flex-direction:column; gap:8px"></ul>
+      <p class="muted">This panel reads from <code>./labnotes.json</code>.</p>
     </div>
   </dialog>
 
@@ -176,6 +190,7 @@
     </div>
   </dialog>
 
+  <!-- Load core UI wiring first, then content feeds -->
   <script src="./assets/app.js" defer></script>
   <script src="./assets/feeds.js" defer></script>
 </body>
