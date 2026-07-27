@@ -1,4 +1,0 @@
-[
-  { "date": "2025-09-23", "text": "BIR→RASM pass trims 12% spills using mask-threaded select." },
-  { "date": "2025-09-20", "text": "Sampler multiplexes 16 channels @2 kHz; frame format stabilized." }
-]

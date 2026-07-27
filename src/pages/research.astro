@@ -1,0 +1,7 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import { projects } from '../data/projects';
+const research = projects.filter((project) => ['Machine-native assurance','Agent infrastructure','Substrate-aware computing','Open research','Experimental computing'].includes(project.category));
+---
+<BaseLayout title="Research — Poor Louis Labs"><div class="shell"><section class="hero"><div><div class="eyebrow">Research programs</div><h1>Research</h1><p class="lede">Standards work, evidence infrastructure, machine-substrate experiments, and open questions presented with explicit maturity and limitations.</p></div></section><section class="section"><div class="grid">{research.map((project) => <ProjectCard project={project} />)}</div></section></div></BaseLayout>

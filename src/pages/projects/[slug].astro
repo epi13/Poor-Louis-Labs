@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { projects, projectBySlug } from '../../data/projects';
+export function getStaticPaths() { return projects.map((project) => ({ params: { slug: project.slug } })); }
+const project = projectBySlug.get(Astro.params.slug ?? '');
+if (!project) return Astro.redirect('/404');
+const related = (project.relationships ?? []).map((slug) => projectBySlug.get(slug)).filter(Boolean);
+const base = import.meta.env.BASE_URL;
+---
+<BaseLayout title={`${project.name} — Poor Louis Labs`} description={project.summary}>
+<div class="shell project-layout">
+  <article class="prose">
+    <div class="eyebrow">{project.category} · {project.maturity}</div>
+    <h1>{project.name}</h1>
+    <p class="lede">{project.summary}</p>
+    <h2>Purpose</h2><p>{project.description}</p>
+    {project.limitations?.length && <><h2>Limitations and assurance boundary</h2><div class="notice"><ul>{project.limitations.map((item) => <li>{item}</li>)}</ul></div></>}
+    {related.length > 0 && <><h2>Related projects</h2><ul>{related.map((item) => <li><a href={`${base}projects/${item?.slug}/`.replace(/\/+/g,'/')}>{item?.name}</a> — {item?.summary}</li>)}</ul></>}
+  </article>
+  <aside class="project-aside">
+    <div class="kicker">Project record</div>
+    <p><strong>Status</strong><br />{project.status}</p>
+    <p><strong>Type</strong><br />{project.projectType}</p>
+    <p><strong>Maturity</strong><br />{project.maturity}</p>
+    {project.languages?.length > 0 && <p><strong>Languages</strong><br />{project.languages.join(', ')}</p>}
+    <p><a class="button primary" href={project.repository}>Open repository</a></p>
+    {project.links?.filter((link) => link.href !== project.repository).map((link) => <p><a href={link.href}>{link.label}</a></p>)}
+  </aside>
+</div>
+</BaseLayout>

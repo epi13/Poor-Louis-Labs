@@ -1,0 +1,5 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+const base = import.meta.env.BASE_URL;
+---
+<BaseLayout title="Page not found — Poor Louis Labs"><div class="shell"><section class="hero"><div><div class="eyebrow">404</div><h1>Page not found.</h1><p class="lede">The requested path is not part of the current public site.</p><a class="button primary" href={base}>Return home</a></div></section></div></BaseLayout>
