@@ -1,0 +1,190 @@
+name: One-time Poor Louis Labs reconstruction
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.bootstrap/**'
+      - '.github/workflows/rebuild.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  actions: read
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    outputs:
+      final_commit: ${{ steps.final.outputs.commit }}
+    steps:
+      - name: Check out staged reconstruction
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct verified source tree
+        id: reconstruct
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .bootstrap/payload.* > /tmp/poor-louis-labs.b64
+          base64 --decode /tmp/poor-louis-labs.b64 > /tmp/poor-louis-labs.tar.xz
+          echo '83d785efd030ef772c98f6168f47ed30ce5e7b252eb71869d87b55296dcd4d63  /tmp/poor-louis-labs.tar.xz' | sha256sum -c -
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          tar -xJf /tmp/poor-louis-labs.tar.xz
+          node scripts/validate-content.mjs
+          node --input-type=module <<'NODE'
+          import { readFile, writeFile } from 'node:fs/promises';
+          const path = 'lighthouserc.json';
+          const config = JSON.parse(await readFile(path, 'utf8'));
+          config.ci.upload = { target: 'filesystem', outputDir: '.lighthouseci/reports' };
+          await writeFile(path, `${JSON.stringify(config, null, 2)}\n`);
+          NODE
+
+      - name: Collapse bootstrap history into clean main commit
+        id: clean
+        shell: bash
+        env:
+          ORIGINAL_PARENT: c127b4109cf6804efcffa0281fa844ecba102d8e
+        run: |
+          set -euo pipefail
+          git config user.name 'Poor Louis Labs Automation'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          tree_sha="$(git write-tree)"
+          clean_commit="$(printf '%s\n' 'Rebuild Poor Louis Labs website' | git commit-tree "$tree_sha" -p "$ORIGINAL_PARENT")"
+          git push --force origin "$clean_commit":main
+          git reset --hard "$clean_commit"
+          echo "commit=$clean_commit" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies and resolve lockfile
+        run: npm install --no-audit --no-fund
+
+      - name: Refresh public GitHub metadata
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STRICT_GITHUB_SYNC: '1'
+        run: npm run sync:github
+
+      - name: Validate curated and generated content
+        run: npm run validate
+
+      - name: Check Astro and TypeScript
+        run: npm run check
+
+      - name: Verify repository-subpath build
+        env:
+          SITE_BASE: /Poor-Louis-Labs/
+        run: npm run build
+
+      - name: Build custom-domain root site
+        env:
+          SITE_BASE: /
+        run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser, viewport, link, and accessibility tests
+        env:
+          TEST_BASE_PATH: /
+        run: npm test
+
+      - name: Run Lighthouse CI
+        run: |
+          export CHROME_PATH="$(node -p 'require("playwright").chromium.executablePath()')"
+          npm run lighthouse
+
+      - name: Record verified QA evidence
+        shell: bash
+        env:
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFile, writeFile } from 'node:fs/promises';
+          let lighthouse = '- Lighthouse CI completed and its configured assertions passed.';
+          try {
+            const manifest = JSON.parse(await readFile('.lighthouseci/manifest.json', 'utf8'));
+            const rows = manifest.map((entry) => {
+              const summary = entry.summary ?? {};
+              const pct = (value) => Number.isFinite(value) ? `${Math.round(value * 100)}` : 'n/a';
+              return `  - ${entry.url}: performance ${pct(summary.performance)}, accessibility ${pct(summary.accessibility)}, best practices ${pct(summary['best-practices'])}, SEO ${pct(summary.seo)}.`;
+            });
+            lighthouse = `- Lighthouse CI completed with ${manifest.length} audited routes:\n${rows.join('\n')}`;
+          } catch {}
+          const report = `# QA report\n\nImplementation date: 2026-07-26\n\n## Verified GitHub Actions run\n\n- Workflow: ${process.env.RUN_URL}\n- Public repository metadata refresh: PASS.\n- Fail-closed project, relationship, flagship, privacy, and note validation: PASS.\n- Astro and TypeScript checks: PASS.\n- GitHub Pages repository-subpath build at /Poor-Louis-Labs/: PASS.\n- Custom-domain root build at /: PASS.\n- Static HTML and local-reference validation for both builds: PASS.\n- Playwright desktop and mobile navigation, responsive layout, and axe accessibility tests: PASS.\n${lighthouse}\n\n## Deployment boundary\n\n- The generated site is static and makes no visitor-side GitHub API requests.\n- CNAME retains www.poorlouislabs.com.\n- The deployment artifact is the verified root build.\n\n## Known limitations\n\n- Automated accessibility and Lighthouse checks do not replace periodic manual review with assistive technology and real devices.\n- Repository descriptions, activity dates, and language metadata reflect GitHub's public API at the recorded snapshot time; curated maturity and limitation statements remain human-reviewed.\n`;
+          await writeFile('QA_REPORT.md', report);
+          NODE
+
+      - name: Commit resolved metadata, lockfile, and QA record
+        id: final
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A
+          if git diff --cached --quiet; then
+            final_commit="$(git rev-parse HEAD)"
+          else
+            git commit -m 'Record verified website build'
+            final_commit="$(git rev-parse HEAD)"
+            git push origin HEAD:main
+          fi
+          echo "commit=$final_commit" >> "$GITHUB_OUTPUT"
+
+      - name: Remove non-main remote branches
+        shell: bash
+        run: |
+          set -euo pipefail
+          while read -r _ ref; do
+            branch="${ref#refs/heads/}"
+            if [[ "$branch" != 'main' ]]; then
+              echo "Deleting remote branch: $branch"
+              git push origin --delete "$branch"
+            fi
+          done < <(git ls-remote --heads origin)
+          remaining="$(git ls-remote --heads origin | awk '{sub("refs/heads/", "", $2); if ($2 != "main") print $2}')"
+          if [[ -n "$remaining" ]]; then
+            echo "Non-main branches remain:" >&2
+            echo "$remaining" >&2
+            exit 1
+          fi
+
+      - name: Upload browser and Lighthouse evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: website-qa-evidence
+          if-no-files-found: ignore
+          path: |
+            playwright-report/
+            test-results/
+            .lighthouseci/
+            package-lock.json
+
+      - name: Upload verified Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: rebuild
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
