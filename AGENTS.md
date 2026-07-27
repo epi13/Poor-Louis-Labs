@@ -12,6 +12,14 @@
 
 Publish only intentionally public repository information. Never expose private repository names, descriptions, branches, issues, commits, local paths, tokens, machine configuration, or unpublished experiments.
 
+## Deployment boundary
+
+- The authoritative site is `https://www.poorlouislabs.com/`.
+- Production uses the root base path `/`, not `/Poor-Louis-Labs/`, while the custom domain is active.
+- Keep `CNAME`, `public/CNAME`, `astro.config.mjs`, and `.github/workflows/pages.yml` aligned.
+- Preserve the root `index.html` and `.nojekyll` as a branch-Pages fallback unless repository settings are verified to use GitHub Actions and an equivalent recovery path is retained.
+- Do not enable `actions/setup-node` npm caching without first committing a valid npm lockfile.
+
 ## MNCS claim controls
 
 - MNCS and MNCDS are experimental and non-accredited.
@@ -23,4 +31,4 @@ Publish only intentionally public repository information. Never expose private r
 
 ## Required checks
 
-Run `npm install`, `npm run check`, and `npm run build`. Verify navigation at the `/Poor-Louis-Labs/` base path. Do not invent adoption, performance, maturity, scientific support, collaborators, or release status.
+Run `npm install`, `npm run check`, and `npm run build`. Verify navigation at the custom-domain root path `/`. Do not invent adoption, performance, maturity, scientific support, collaborators, or release status.
