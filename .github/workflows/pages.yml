@@ -23,11 +23,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+      - uses: actions/configure-pages@v5
+        if: github.event_name != 'pull_request'
       - run: npm install --no-audit --no-fund
       - run: npm run build
         env:
-          SITE_BASE: /Poor-Louis-Labs/
+          SITE_BASE: /
+          SITE_URL: https://www.poorlouislabs.com
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:
