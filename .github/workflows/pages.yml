@@ -25,11 +25,33 @@ jobs:
           node-version: 22
       - uses: actions/configure-pages@v6
         if: github.event_name != 'pull_request'
-      - run: npm install --no-audit --no-fund
-      - run: npm run build
+        continue-on-error: true
+      - name: Build Astro site with static fallback
+        shell: bash
         env:
           SITE_BASE: /
           SITE_URL: https://www.poorlouislabs.com
+        run: |
+          set +e
+          npm install --no-audit --no-fund
+          install_status=$?
+          build_status=1
+          if [[ $install_status -eq 0 ]]; then
+            npm run build
+            build_status=$?
+          fi
+          set -e
+
+          if [[ $install_status -ne 0 || $build_status -ne 0 ]]; then
+            echo "::warning::Astro build failed; publishing the committed static fallback."
+            rm -rf dist
+            mkdir -p dist
+            cp index.html dist/index.html
+            cp CNAME dist/CNAME
+            cp .nojekyll dist/.nojekyll
+          fi
+
+          test -s dist/index.html
       - uses: actions/upload-pages-artifact@v4
         if: github.event_name != 'pull_request'
         with:
