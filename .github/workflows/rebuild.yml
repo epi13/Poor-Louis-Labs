@@ -1,5 +1,6 @@
 name: One-time Poor Louis Labs reconstruction
 
+# Triggered for the requested production reconstruction on 2026-07-26.
 on:
   push:
     branches: [main]
